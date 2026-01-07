@@ -1,0 +1,169 @@
+import { BigNumber, Contract, providers, type BigNumberish } from "ethers5";
+import {
+	getAddress,
+	hexlify,
+	id as labelhash,
+	Interface,
+	isHexString,
+	keccak256,
+	Logger,
+	toUtf8Bytes,
+} from "ethers5/lib/utils";
+import {
+	ABI_FRAGMENTS,
+	COIN_TYPE_ETH,
+	getReverseName,
+	isEVMCoinType,
+	UR_PROXY,
+} from "./shared.js";
+import { ens_normalize } from "@adraffy/ens-normalize";
+
+type Future<T> = T | Promise<T>;
+
+declare module "@ethersproject/providers" {
+	interface BaseProvider {
+		resolveName(
+			name: Future<string>,
+			coinType?: BigNumberish
+		): Promise<string | null>;
+		lookupAddress(
+			address: Future<string>,
+			coinType?: BigNumberish
+		): Promise<string | null>;
+	}
+}
+
+const logger = new Logger("ur-patch");
+
+const ABI = new Interface(ABI_FRAGMENTS);
+
+providers.BaseProvider.prototype.getResolver = async function (name) {
+	const UR = new Contract(UR_PROXY, ABI, this);
+	try {
+		name = ens_normalize(name);
+		const result = await UR.requireResolver(dnsEncode(name));
+		const resolver = new providers.Resolver(this, result.resolver, name);
+		resolver._supportsEip2544 = Promise.resolve(result.extended);
+		return resolver;
+	} catch (err) {
+		return null;
+	}
+};
+
+providers.BaseProvider.prototype.resolveName = async function (
+	name,
+	coinType: BigNumberish = COIN_TYPE_ETH
+) {
+	name = await name;
+	coinType = BigNumber.from(coinType).toBigInt();
+	if (isHexString(name) && name.length === 42) {
+		return getAddress(name); // weird
+	}
+	try {
+		name = ens_normalize(name);
+	} catch {
+		logger.throwArgumentError("invalid ENS name", "name", name);
+	}
+	const resolver = await this.getResolver(name);
+	if (!resolver) return null;
+	try {
+		return fetchAddress(resolver, coinType);
+	} catch {
+		return null;
+	}
+};
+
+providers.BaseProvider.prototype.lookupAddress = async function (
+	address,
+	coinType: BigNumberish = COIN_TYPE_ETH
+) {
+	address = await address;
+	if (address.length <= 2 || !isHexString(address)) {
+		logger.throwArgumentError("invalid address", "address", address);
+	}
+	address = address.toLowerCase();
+	coinType = BigNumber.from(coinType).toBigInt();
+	const reverseName = getReverseName(address, coinType);
+	try {
+		const rev = await this.getResolver(reverseName);
+		if (rev) {
+			const name = await callResolver<string>(rev, "name");
+			if (name) {
+				const fwd = await this.getResolver(name);
+				if (fwd) {
+					const checked = await fetchAddress(fwd, coinType);
+					if (address === checked.toLowerCase()) {
+						return name;
+					}
+				}
+			}
+		}
+	} catch {}
+	return null;
+};
+
+function namesplit(name: string) {
+	return name ? name.split(".") : [];
+}
+
+function dnsEncode(name: string) {
+	const m = namesplit(name).map((x) => toUtf8Bytes(x));
+	const v = new Uint8Array(m.reduce((a, x) => a + 1 + x.length, 1));
+	let pos = 0;
+	for (const x of m) {
+		if (x.length > 255)
+			throw new Error("invalid DNS encoded entry; length exceeds 255 bytes");
+		v[pos++] = x.length;
+		v.set(x, pos);
+		pos += x.length;
+	}
+	return hexlify(v);
+}
+
+function namehash(name: string) {
+	return namesplit(name).reduceRight(
+		(h, x) => keccak256(h + labelhash(x).slice(2)),
+		"0x".padEnd(66, "0")
+	);
+}
+
+async function fetchAddress(resolver: providers.Resolver, coinType: bigint) {
+	if (coinType === COIN_TYPE_ETH) {
+		return callResolver<string>(resolver, "addr(bytes32)");
+	} else {
+		const a = await callResolver<string>(
+			resolver,
+			"addr(bytes32,uint256)",
+			coinType
+		);
+		return isEVMCoinType(coinType)
+			? a === "0x"
+				? a.padEnd(42)
+				: getAddress(a)
+			: a;
+	}
+}
+
+async function callResolver<T>(
+	resolver: providers.Resolver,
+	fragment: string,
+	...args: any[]
+): Promise<T> {
+	const f = ABI.getFunction(fragment)!;
+	const r = new Contract(resolver.address, ABI, resolver.provider);
+	if (await resolver.supportsWildcard()) {
+		const res: any = ABI.decodeFunctionResult(
+			f,
+			await r.resolve(
+				dnsEncode(resolver.name),
+				ABI.encodeFunctionData(f, [namehash(resolver.name), ...args]),
+				{ ccipReadEnabled: true }
+			)
+		);
+		return f.outputs?.length === 1 ? res[0] : res;
+	} else {
+		return r[f.format()](namehash(resolver.name), ...args, {
+			ccipReadEnabled: true,
+		});
+	}
+}
