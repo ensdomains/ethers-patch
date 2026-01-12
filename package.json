@@ -1,16 +1,15 @@
 {
-	"name": "ethers-ur-patch",
 	"type": "module",
-	"private": true,
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"tsup": "^8.5.1"
 	},
-	"peerDependencies": {
-		"typescript": "^5"
-	},
-	"dependencies": {
-		"@adraffy/ens-normalize": "^1.11.1",
-		"ethers5": "npm:ethers@5",
-		"ethers6": "npm:ethers@6"
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"build:v5": "cd packages/v5/ && tsup index.ts --dts --format esm,cjs --out-dir dist",
+		"build:v6": "cd packages/v6/ && tsup index.ts --dts --format esm,cjs --out-dir dist",
+		"build": "bun run build:v5 && bun run build:v6"
 	}
 }

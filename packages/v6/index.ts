@@ -12,16 +12,25 @@ import {
 	isError,
 	namehash,
 	getAddress,
-} from "ethers6";
+	ensNormalize,
+} from "ethers";
 import {
 	ABI_FRAGMENTS,
 	COIN_TYPE_ETH,
 	getReverseName,
 	isEVMCoinType,
 	UR_PROXY,
-} from "./shared.js";
+} from "../../src/shared.js";
 
-declare module "ethers6" {
+export * from "ethers";
+
+declare module "ethers" {
+	namespace EnsResolver {
+		function fromNameOld(
+			provider: AbstractProvider,
+			name: string
+		): Promise<EnsResolver | null>;
+	}
 	interface AbstractProvider {
 		resolveName(name: string, coinType?: BigNumberish): Promise<string | null>;
 		lookupAddress(
@@ -33,10 +42,15 @@ declare module "ethers6" {
 
 const ABI = new Interface(ABI_FRAGMENTS);
 
+EnsResolver.fromNameOld = EnsResolver.fromName;
+//const { fromName } = EnsResolver;
 EnsResolver.fromName = async function (provider, name) {
+	//if (name.startsWith("old:")) return fromName(provider, name.slice(4));
+	if (!name) return null;
+	const dns = dnsEncode(name, 255);
 	const UR = new Contract(UR_PROXY, ABI, provider);
 	try {
-		const result = await UR.requireResolver(dnsEncode(name, 255));
+		const result = await UR.requireResolver(dns);
 		const resolver = new EnsResolver(provider, result.resolver, name);
 		const extended = Promise.resolve(result.extended);
 		resolver.supportsWildcard = () => extended;
@@ -46,27 +60,27 @@ EnsResolver.fromName = async function (provider, name) {
 	}
 };
 
+const { resolveName } = AbstractProvider.prototype;
 AbstractProvider.prototype.resolveName = async function (
 	name,
 	coinType: BigNumberish = COIN_TYPE_ETH
 ) {
+	if (coinType === "old") return resolveName.call(this, name);
 	coinType = getBigInt(coinType, "coinType");
 	const fwd = await this.getResolver(name);
 	if (!fwd) return null;
-	try {
-		return fetchAddress(fwd, coinType);
-	} catch {
-		return null;
-	}
+	return fetchAddress(fwd, coinType).catch(() => null);
 };
 
+const { lookupAddress } = AbstractProvider.prototype;
 AbstractProvider.prototype.lookupAddress = async function (
 	address,
 	coinType: BigNumberish = COIN_TYPE_ETH
 ) {
+	if (coinType === "old") return lookupAddress.call(this, address);
 	assertArgument(
-		address.length > 2 && isHexString(address),
-		"address must be non-empty hex string",
+		isHexString(address) && address !== "0x",
+		"invalid address",
 		"address",
 		address
 	);
@@ -77,7 +91,7 @@ AbstractProvider.prototype.lookupAddress = async function (
 		const rev = await this.getResolver(reverseName);
 		if (rev) {
 			const name = await callResolver<string>(rev, "name");
-			if (name) {
+			if (name && ensNormalize(name) === name) {
 				const fwd = await this.getResolver(name);
 				if (fwd) {
 					const checked = await fetchAddress(fwd, coinType).then(

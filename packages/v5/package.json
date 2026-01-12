@@ -1,0 +1,25 @@
+{
+	"name": "@ensdomains/ethers-v5",
+	"version": "0.0.1",
+	"type": "module",
+	"main": "dist/index.cjs",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"./dist"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@adraffy/ens-normalize": "^1.11.1",
+		"ethers": "5",
+		"@ethersproject/providers": "5"
+	}
+}

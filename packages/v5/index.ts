@@ -1,4 +1,4 @@
-import { BigNumber, Contract, providers, type BigNumberish } from "ethers5";
+import { BigNumber, Contract, providers, type BigNumberish } from "ethers";
 import {
 	getAddress,
 	hexlify,
@@ -8,26 +8,26 @@ import {
 	keccak256,
 	Logger,
 	toUtf8Bytes,
-} from "ethers5/lib/utils";
+} from "ethers/lib/utils";
 import {
 	ABI_FRAGMENTS,
 	COIN_TYPE_ETH,
 	getReverseName,
 	isEVMCoinType,
 	UR_PROXY,
-} from "./shared.js";
+} from "../../src/shared.js";
 import { ens_normalize } from "@adraffy/ens-normalize";
 
-type Future<T> = T | Promise<T>;
+export * from "ethers";
 
 declare module "@ethersproject/providers" {
 	interface BaseProvider {
 		resolveName(
-			name: Future<string>,
+			name: string | Promise<string>,
 			coinType?: BigNumberish
 		): Promise<string | null>;
 		lookupAddress(
-			address: Future<string>,
+			address: string | Promise<string>,
 			coinType?: BigNumberish
 		): Promise<string | null>;
 	}
@@ -64,13 +64,9 @@ providers.BaseProvider.prototype.resolveName = async function (
 	} catch {
 		logger.throwArgumentError("invalid ENS name", "name", name);
 	}
-	const resolver = await this.getResolver(name);
-	if (!resolver) return null;
-	try {
-		return fetchAddress(resolver, coinType);
-	} catch {
-		return null;
-	}
+	const fwd = await this.getResolver(name);
+	if (!fwd) return null;
+	return fetchAddress(fwd, coinType).catch(() => null);
 };
 
 providers.BaseProvider.prototype.lookupAddress = async function (
@@ -78,7 +74,7 @@ providers.BaseProvider.prototype.lookupAddress = async function (
 	coinType: BigNumberish = COIN_TYPE_ETH
 ) {
 	address = await address;
-	if (address.length <= 2 || !isHexString(address)) {
+	if (!isHexString(address) || address === "0x") {
 		logger.throwArgumentError("invalid address", "address", address);
 	}
 	address = address.toLowerCase();
@@ -88,7 +84,7 @@ providers.BaseProvider.prototype.lookupAddress = async function (
 		const rev = await this.getResolver(reverseName);
 		if (rev) {
 			const name = await callResolver<string>(rev, "name");
-			if (name) {
+			if (name && ens_normalize(name) === name) {
 				const fwd = await this.getResolver(name);
 				if (fwd) {
 					const checked = await fetchAddress(fwd, coinType);
