@@ -19,5 +19,8 @@
 	},
 	"dependencies": {
 		"ethers": "6"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

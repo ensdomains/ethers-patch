@@ -21,5 +21,8 @@
 		"@adraffy/ens-normalize": "^1.11.1",
 		"ethers": "5",
 		"@ethersproject/providers": "5"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

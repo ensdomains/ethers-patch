@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { EnsResolver, ethers } from "../packages/v6/index.js";
+import { ethers } from "../packages/v6/index.js";
 import {
 	RPC_URL,
 	NAME,
@@ -18,28 +18,28 @@ describe("v6", () => {
 
 	describe("fromName", () => {
 		test("supportsWildcard()", async () => {
-			const r0 = (await EnsResolver.fromNameOld(provider, NAME))!;
-			const r1 = (await EnsResolver.fromName(provider, NAME))!;
+			const r0 = (await ethers.EnsResolver.fromNameOld(provider, NAME))!;
+			const r1 = (await ethers.EnsResolver.fromName(provider, NAME))!;
 			expect(Bun.peek.status(r0.supportsWildcard())).toStrictEqual("pending");
 			expect(Bun.peek.status(r1.supportsWildcard())).toStrictEqual("fulfilled");
 		});
 
 		test("same", async () => {
-			const r0 = (await EnsResolver.fromNameOld(provider, NAME))!;
-			const r1 = (await EnsResolver.fromName(provider, NAME))!;
+			const r0 = (await ethers.EnsResolver.fromNameOld(provider, NAME))!;
+			const r1 = (await ethers.EnsResolver.fromName(provider, NAME))!;
 			expect(r1.address, "address").toStrictEqual(r0.address);
 			expect(r1.name, "name").toStrictEqual(r0.name);
 		});
 
 		test("dne", async () => {
-			const a = await EnsResolver.fromNameOld(provider, NAME_DNE);
-			const b = await EnsResolver.fromName(provider, NAME_DNE);
+			const a = await ethers.EnsResolver.fromNameOld(provider, NAME_DNE);
+			const b = await ethers.EnsResolver.fromName(provider, NAME_DNE);
 			expect(a).toStrictEqual(b);
 		});
 
 		test("empty", async () => {
-			const a = await EnsResolver.fromNameOld(provider, "");
-			const b = await EnsResolver.fromName(provider, "");
+			const a = await ethers.EnsResolver.fromNameOld(provider, "");
+			const b = await ethers.EnsResolver.fromName(provider, "");
 			expect(a).toStrictEqual(b);
 		});
 	});

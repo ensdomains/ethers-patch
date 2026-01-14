@@ -7,14 +7,24 @@ Monkeypatch for [ENSIP-19](https://docs.ens.domains/ensip/19) (Multichain Primar
 ### Features
 
 * `resolveName()` supports optional `coinType`
+    * use `"old"` for old implementation
 * `lookupAddress()` supports optional `coinType`
-* ENSIP-10 implementation uses `UniversalResolver.requireResolver()`
+    * use `"old"` for old implementation
+* [ENSIP-10](https://docs.ens.domains/ensip/10) implementation uses `UniversalResolver.requireResolver()`
 * `{Ens}Resolver.supportsWildcard()` is noop
+* v6
+    * use `fromNameOld()` for old implementation
+* v5
+    * use `getResolverOld()` for old implementation
+    * updated normalization to [@adraffy/ens-normalize](https://github.com/adraffy/ens-normalize.js)
+    * `namehash()` is patched
+    * `dnsEncode()` is patched and uses 255-byte limit
+    * `ensNormalize()` is exposed
 
 #### Roadmap 
 
 * ☑︎ Downgrade versions to lowest supported
-* ☐ Explore normalization options for v5
+* ☑︎ Explore normalization options for v5
 * ☑︎ Separate libraries
 * ☑︎ Add tests for checking patched return types
 * ☑︎ Add tests for failures

@@ -1,4 +1,4 @@
-// apply {name, version} to packages/*/package.json
+// propagate {name, version} from `package.json` to each `packages/*/package.json`
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

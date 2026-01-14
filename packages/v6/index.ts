@@ -60,7 +60,8 @@ EnsResolver.fromName = async function (provider, name) {
 	}
 };
 
-const { resolveName } = AbstractProvider.prototype;
+const { resolveName, lookupAddress } = AbstractProvider.prototype;
+
 AbstractProvider.prototype.resolveName = async function (
 	name,
 	coinType: BigNumberish = COIN_TYPE_ETH
@@ -72,7 +73,6 @@ AbstractProvider.prototype.resolveName = async function (
 	return fetchAddress(fwd, coinType).catch(() => null);
 };
 
-const { lookupAddress } = AbstractProvider.prototype;
 AbstractProvider.prototype.lookupAddress = async function (
 	address,
 	coinType: BigNumberish = COIN_TYPE_ETH
