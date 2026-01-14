@@ -1,6 +1,6 @@
 {
 	"name": "@ensdomains/ethers-patch-v5",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"type": "module",
 	"main": "dist/index.cjs",
 	"module": "dist/index.js",
@@ -19,8 +19,8 @@
 	},
 	"dependencies": {
 		"@adraffy/ens-normalize": "^1.11.1",
-		"ethers": "5",
-		"@ethersproject/providers": "5"
+		"ethers": "^5.0.0",
+		"@ethersproject/providers": "^5.0.0"
 	},
 	"publishConfig": {
 		"access": "public"
