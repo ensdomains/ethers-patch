@@ -7,7 +7,7 @@ import {
 	NAME_DNE,
 	NAME_UNNORM,
 	ADDR_DNE,
-	NAME_ZERO,
+	NAME_UNSET,
 } from "./constants.js";
 import { COIN_TYPE_DEFAULT } from "../src/shared.js";
 import { requireThrow } from "./utils.js";
@@ -79,9 +79,9 @@ describe("v5", () => {
 			expect(a).toStrictEqual(b);
 		});
 
-		test("zero", async () => {
-			const a = await provider.resolveName(NAME_ZERO, "old");
-			const b = await provider.resolveName(NAME_ZERO);
+		test("unset", async () => {
+			const a = await provider.resolveName(NAME_UNSET, "old");
+			const b = await provider.resolveName(NAME_UNSET);
 			expect(a).toStrictEqual(b);
 		});
 
