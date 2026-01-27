@@ -2,6 +2,18 @@
 
 Monkeypatch for [ENSIP-19](https://docs.ens.domains/ensip/19) (Multichain Primary) and [ENSIP-23](https://docs.ens.domains/ensip/23) (UniversalResolver) support in [ethers.js](https://github.com/ethers-io/ethers.js/).
 
+### Usage
+
+```ts
+// v5
+import { ethers } from "ethers";
+import "@ensdomains/ethers-patch-v5";
+
+// v6
+import { ethers } from "ethers";
+import "@ensdomains/ethers-patch-v6";
+```
+
 ### Features
 
 * `resolveName()` supports optional `coinType`
