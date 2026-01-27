@@ -4,14 +4,12 @@ Monkeypatch for [ENSIP-19](https://docs.ens.domains/ensip/19) (Multichain Primar
 
 ### Usage
 
-```ts
-// v5
-import { ethers } from "ethers";
-import "@ensdomains/ethers-patch-v5";
+`npm i @ensdomains/ethers-patch-v5` [&check;](https://www.npmjs.com/package/@ensdomains/ethers-patch-v5) \
+`npm i @ensdomains/ethers-patch-v6` [&check;](https://www.npmjs.com/package/@ensdomains/ethers-patch-v6)
 
-// v6
+```ts
 import { ethers } from "ethers";
-import "@ensdomains/ethers-patch-v6";
+import "@ensdomains/ethers-patch-v5"; // or "-v6" 
 ```
 
 ### Features
