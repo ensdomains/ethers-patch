@@ -35,11 +35,11 @@ declare module "@ethersproject/providers" {
 		getResolverOld(name: string): Promise<providers.Resolver | null>;
 		resolveName(
 			name: string | Promise<string>,
-			coinType?: BigNumberish
+			coinType?: BigNumberish,
 		): Promise<string | null>;
 		lookupAddress(
 			address: string | Promise<string>,
-			coinType?: BigNumberish
+			coinType?: BigNumberish,
 		): Promise<string | null>;
 	}
 }
@@ -85,7 +85,7 @@ providers.BaseProvider.prototype.getResolver = async function (name) {
 
 providers.BaseProvider.prototype.resolveName = async function (
 	name,
-	coinType: BigNumberish = COIN_TYPE_ETH
+	coinType: BigNumberish = COIN_TYPE_ETH,
 ) {
 	if (coinType === "old") return resolveName.call(this, name);
 	name = await name;
@@ -104,7 +104,7 @@ providers.BaseProvider.prototype.resolveName = async function (
 
 providers.BaseProvider.prototype.lookupAddress = async function (
 	address,
-	coinType: BigNumberish = COIN_TYPE_ETH
+	coinType: BigNumberish = COIN_TYPE_ETH,
 ) {
 	if (coinType === "old") return lookupAddress.call(this, address);
 	address = await address;
@@ -155,7 +155,7 @@ function dnsEncode(name: string) {
 function namehash(name: string) {
 	return namesplit(name).reduceRight(
 		(h, x) => keccak256(h + labelhash(x).slice(2)),
-		"0x".padEnd(66, "0")
+		"0x".padEnd(66, "0"),
 	);
 }
 
@@ -166,11 +166,11 @@ async function fetchAddress(resolver: providers.Resolver, coinType: bigint) {
 	const a = await callResolver<string>(
 		resolver,
 		"addr(bytes32,uint256)",
-		coinType
+		coinType,
 	);
 	return isEVMCoinType(coinType)
 		? a === "0x"
-			? a.padEnd(42)
+			? a.padEnd(42, "0")
 			: getAddress(a)
 		: a;
 }
@@ -189,8 +189,8 @@ async function callResolver<T>(
 			await r.resolve(
 				dnsEncode(resolver.name),
 				ABI.encodeFunctionData(f, [node, ...args]),
-				{ ccipReadEnabled: true }
-			)
+				{ ccipReadEnabled: true },
+			),
 		);
 		return f.outputs?.length === 1 ? res[0] : res;
 	} else {

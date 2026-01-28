@@ -8,6 +8,7 @@ import {
 	NAME_UNNORM,
 	ADDR_DNE,
 	NAME_UNSET,
+	NAME_ZERO,
 } from "./constants.js";
 import { COIN_TYPE_DEFAULT } from "../src/shared.js";
 import { requireThrow } from "./utils.js";
@@ -52,8 +53,14 @@ describe("v6", () => {
 
 		test("addr(evm:0)", () => {
 			expect(
-				provider.resolveName(NAME, COIN_TYPE_DEFAULT)
+				provider.resolveName(NAME, COIN_TYPE_DEFAULT),
 			).resolves.toStrictEqual(ADDR);
+		});
+
+		test("zero evm", async () => {
+			expect(
+				provider.resolveName(NAME_ZERO, COIN_TYPE_DEFAULT),
+			).resolves.toStrictEqual(null);
 		});
 
 		test("dne", async () => {
@@ -76,7 +83,7 @@ describe("v6", () => {
 
 		test("unnormalized", async () => {
 			const a = await requireThrow(() =>
-				provider.resolveName(NAME_UNNORM, "old")
+				provider.resolveName(NAME_UNNORM, "old"),
 			);
 			const b = await requireThrow(() => provider.resolveName(NAME_UNNORM));
 			expect(a).toStrictEqual(b);
@@ -105,7 +112,7 @@ describe("v6", () => {
 
 		test("addr(evm:0)", () => {
 			expect(
-				provider.lookupAddress(ADDR, COIN_TYPE_DEFAULT)
+				provider.lookupAddress(ADDR, COIN_TYPE_DEFAULT),
 			).resolves.toStrictEqual(NAME);
 		});
 

@@ -4,6 +4,8 @@ export const RPC_URL = "https://eth.drpc.org";
 export const NAME = "raffy.eth";
 export const ADDR = "0x51050ec063d393217B436747617aD1C2285Aeeee";
 
+export const NAME_ZERO = "zero.raffy.eth"; // no addresses defined
+
 export const NAME_DNE = "__dne"; // name w/o forward
 export const ADDR_DNE = "0x00000000000000000000000000000000DeaDBeef"; // address w/o reverse
 

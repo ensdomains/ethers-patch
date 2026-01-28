@@ -28,14 +28,14 @@ declare module "ethers" {
 	namespace EnsResolver {
 		function fromNameOld(
 			provider: AbstractProvider,
-			name: string
+			name: string,
 		): Promise<EnsResolver | null>;
 	}
 	interface AbstractProvider {
 		resolveName(name: string, coinType?: BigNumberish): Promise<string | null>;
 		lookupAddress(
 			address: string,
-			coinType?: BigNumberish
+			coinType?: BigNumberish,
 		): Promise<string | null>;
 	}
 }
@@ -65,7 +65,7 @@ const { resolveName, lookupAddress } = AbstractProvider.prototype;
 
 AbstractProvider.prototype.resolveName = async function (
 	name,
-	coinType: BigNumberish = COIN_TYPE_ETH
+	coinType: BigNumberish = COIN_TYPE_ETH,
 ) {
 	if (coinType === "old") return resolveName.call(this, name);
 	coinType = getBigInt(coinType, "coinType");
@@ -80,14 +80,14 @@ AbstractProvider.prototype.resolveName = async function (
 
 AbstractProvider.prototype.lookupAddress = async function (
 	address,
-	coinType: BigNumberish = COIN_TYPE_ETH
+	coinType: BigNumberish = COIN_TYPE_ETH,
 ) {
 	if (coinType === "old") return lookupAddress.call(this, address);
 	assertArgument(
 		isHexString(address) && address !== "0x",
 		"invalid address",
 		"address",
-		address
+		address,
 	);
 	address = address.toLowerCase();
 	coinType = getBigInt(coinType, "coinType");
@@ -101,14 +101,14 @@ AbstractProvider.prototype.lookupAddress = async function (
 				if (fwd) {
 					const checked = await fetchAddress(fwd, coinType).then(
 						(x) => x.toLowerCase(),
-						() => {}
+						() => {},
 					);
 					if (checked) {
 						assert(
 							address === checked,
 							"address->name->address mismatch",
 							"BAD_DATA",
-							{ value: [address, checked] }
+							{ value: [address, checked] },
 						);
 						return name;
 					}
@@ -134,11 +134,11 @@ async function fetchAddress(resolver: EnsResolver, coinType: bigint) {
 	const a = await callResolver<string>(
 		resolver,
 		"addr(bytes32,uint256)",
-		coinType
+		coinType,
 	);
 	return isEVMCoinType(coinType)
 		? a === "0x"
-			? a.padEnd(42)
+			? a.padEnd(42, "0")
 			: getAddress(a)
 		: a;
 }
@@ -156,8 +156,8 @@ async function callResolver<T>(
 			await r.resolve(
 				dnsEncode(resolver.name, 255),
 				ABI.encodeFunctionData(f, [namehash(resolver.name), ...args]),
-				{ enableCcipRead: true }
-			)
+				{ enableCcipRead: true },
+			),
 		);
 		return f.outputs.length === 1 ? res[0] : res;
 	} else {
